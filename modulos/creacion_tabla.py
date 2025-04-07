@@ -9,7 +9,83 @@ else:
     from modulos import automata_identificadores as a_i
     from modulos import automata_numeros as a_n
 
+<<<<<<< HEAD
 
+=======
+a_iden= a_i.Automata_Identificadores()
+a_num=a_n.Automata_Numeros()
+arch_counter= "count_simbolos.bin"
+TAM_REGISTRO = 10
+
+def leer_rango_sim():
+    valor = None
+    with open(arch_counter, "rb") as f:
+        for i in range(1):  
+            f.seek(i * TAM_REGISTRO)
+            dato = f.read(TAM_REGISTRO).decode().strip()
+            if dato:
+                valor=int(dato)
+            else:
+                valor=1000
+    return valor
+
+archivo = "tabla_simbolos.bin"
+
+RANGO_ACRI=leer_rango_sim()
+print(RANGO_ACRI)
+
+def escribir_dato_counter(posicion, valor):
+    with open(arch_counter, "r+b") as f:
+        f.seek(posicion * TAM_REGISTRO) 
+        nuevo_valor = valor.ljust(TAM_REGISTRO) 
+        f.write(nuevo_valor.encode())  
+
+def escribir_dato(posicion, valor):
+    with open(archivo, "r+b") as f:
+        f.seek(posicion * TAM_REGISTRO) 
+        f.write(valor.ljust(TAM_REGISTRO).encode())
+
+def leer_cadena(posicion):
+    with open(archivo, "rb") as f:
+        f.seek(posicion * TAM_REGISTRO)
+        dato = f.read(TAM_REGISTRO).decode().strip()  
+        return dato if dato else None
+    
+def leer_todas_las_cadenas():
+    palabras = set()
+    with open(archivo, "rb") as f:
+        for i in range(RANGO_ACRI):  
+            f.seek(i * TAM_REGISTRO)
+            dato = f.read(TAM_REGISTRO).decode().strip()
+            if dato:
+                palabras.add(dato)
+    return palabras
+
+def incrementar_rango():
+    global RANGO_ACRI
+    RANGO_ACRI=RANGO_ACRI+1
+    cadena=str(RANGO_ACRI)
+    escribir_dato_counter(0, cadena) 
+
+def escribir_tabla(palabra):
+    global RANGO_ACRI
+    posicion= RANGO_ACRI-100
+    cadena= str(palabra)
+    escribir_dato(posicion, cadena)
+
+def resaltar_palabras(texto, label_counter_tokens, label_counter_errores,tipo,event=None):
+    tokens_totales=0
+    errores_totales=0
+    texto.tag_remove("highlight", "1.0", tk.END)
+    texto.tag_remove("id_highlight", "1.0", tk.END)  
+    texto.tag_remove("num_highlight", "1.0", tk.END)
+    texto.tag_remove("err_light", "1.0", tk.END)
+    texto.tag_remove("err_fin", "1.0", tk.END)       
+    contenido = texto.get("1.0", tk.END).strip()
+    palabras_en_archivo = leer_todas_las_cadenas()
+
+    palabras_resaltadas = set() 
+>>>>>>> 54572ef (actualf)
     
 
     for palabra in re.findall(r'[!-~]+', contenido):
@@ -190,3 +266,7 @@ if __name__=="__main__":
     texto.tag_configure("err_fin", foreground="black" ,background="red")
     texto.bind("<KeyRelease>",lambda event: resaltar_palabras(texto,label_counter_tokens,label_counter_err,0,event))
     root.mainloop()
+<<<<<<< HEAD
+=======
+
+>>>>>>> 54572ef (actualf)
