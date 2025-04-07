@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-
+from tkinter import ttk, messagebox,filedialog
+from PIL import Image, ImageTk
+from modulos import creacion_tabla as tablex
 
 class VentanaInput(tk.Toplevel):
     def __init__(self, root):
@@ -22,6 +23,7 @@ class VentanaInput(tk.Toplevel):
             self.destroy()  
         else:
             messagebox.showwarning("Advertencia", "Por favor ingrese un nombre para el archivo.")
+
 
 class VisualizadorArchivos(ttk.Notebook):
     def __init__(self, main_frame):
@@ -67,7 +69,6 @@ def actualizar_seleccion(visualizador_archivos, archivos_array):
             archivo.setSelecionada(False)  
 
 
-
 def nuevo_archivo(root, visualizador_archivos,archivos_array,label_counter_tokens,label_counter_err):
     ventana_input = VentanaInput(root)
     root.wait_window(ventana_input)  
@@ -80,8 +81,75 @@ def nuevo_archivo(root, visualizador_archivos,archivos_array,label_counter_token
     
 
 
-def guardar_archivo():
-    messagebox.showinfo("Guardar Archivo", "Guardar el archivo actual")
+def cargar_imagen(notebook):
+    imagen = Image.open("imagenes/logo.png")  
+    imagen = imagen.resize((150, 150), Image.Resampling.LANCZOS) 
+    imagen_tk = ImageTk.PhotoImage(imagen)
+
+    label_imagen = tk.Label(notebook, image=imagen_tk, bg="black")
+    label_imagen.image = imagen_tk 
+    label_imagen.place(relx=0.5, rely=0.5, anchor="center")
+
+def abrir_archivo(array_archivos,visualizador_archivos,label_counter_tokens,label_counter_err):
+    actualizar_seleccion(visualizador_archivos,array_archivos)
+    texter=None
+    for arch in array_archivos:
+        if arch.is_seleccionada==True:
+            texter=arch.editor
+            break
+    archivo = filedialog.askopenfilename(filetypes=[("Archivos Txt","*.txt")])
+    if archivo:
+        with open(archivo,"r",encoding="utf-8") as f:
+            contenido=f.read()
+    else: 
+        messagebox.showwarning("Mensaje del Sistema", "No se selecciono contenido.")
+        return
+
+    if texter != None:
+        texter.delete("1.0",tk.END)
+        texter.insert(tk.END,contenido)
+        tablex.resaltar_palabras(texter,label_counter_tokens,label_counter_err,0)
+    else:
+        nombre_archivo = archivo.split("/")[-1].split("\\")[-1].split(".")[0]
+        archivo_new = Archivo(visualizador_archivos,nombre_archivo,label_counter_tokens,label_counter_err)
+        archivo_new.editor.delete("1.0",tk.END)
+        archivo_new.editor.insert(tk.END,contenido)
+        tablex.resaltar_palabras(archivo_new.editor,label_counter_tokens,label_counter_err,0)
+        array_archivos.append(archivo_new)
+        messagebox.showwarning("Mensaje del Sistema", "Se creo un Archivo.")
+
+def elim_archivo(visualizador_archivos,array_archivos,label_counter_tokens):
+    actualizar_seleccion(visualizador_archivos,array_archivos)
+    for arch in array_archivos:
+        if arch.is_seleccionada:
+            confirmar = messagebox.askyesno("Confirmar Eliminación", f"¿Seguro que deseas cerrar {arch.nombre_archivo}? puede que sus cambios no se guarden")
+            if confirmar:
+                label_counter_tokens.config(text="0") 
+                index = visualizador_archivos.index(arch)
+                visualizador_archivos.forget(index)
+                array_archivos.remove(arch)
+            break
+
+def guardar_archivo(array_archivos, visualizador_archivos):
+    actualizar_seleccion(visualizador_archivos, array_archivos)
+    for arch in array_archivos:
+        if arch.is_seleccionada:
+            contenido = arch.editor.get("1.0", tk.END)  
+            archivo_guardar = filedialog.asksaveasfilename(
+                defaultextension=".txt",
+                filetypes=[("Archivos de texto", "*.txt")],
+                initialfile=arch.nombre_archivo.replace(".orange", ".txt")
+            )
+
+            if archivo_guardar:
+                with open(archivo_guardar, "w", encoding="utf-8") as f:
+                    f.write(contenido)
+
+                messagebox.showinfo("Guardar Archivo", f"El archivo se ha guardado correctamente como:\n{archivo_guardar}")
+            return
+
+    messagebox.showwarning("Guardar Archivo", "No hay un archivo seleccionado para guardar.")
+
 
 
 def salir(root):
@@ -92,12 +160,27 @@ def mostrar_config():
     messagebox.showinfo("Configuración", "Abrir configuración")
 
 
-def cambiar_fuente():
-    messagebox.showinfo("Tema", "Cambiar el tema de la aplicación")
+def tablasimbolos():
+    messagebox.showinfo("Tabla de Simbolos", "ORANGE.CONF")
+
 
 
 def acerca_de():
-    messagebox.showinfo("Acerca de", "MiniIDE - Versión 1.0")
+    messagebox.showinfo("Acerca de", "MiniStudioIDE - Versión 3.0") 
+
+def compilar_archivo(visualizador_archivos,label_counter_tokens,array_archivos,label_counter_err):
+    actualizar_seleccion(visualizador_archivos,array_archivos)
+    editor=None
+    errores=0
+    tokens=0
+    for arch in array_archivos:
+        print(arch.is_seleccionada)
+        if arch.is_seleccionada==True:
+            editor = arch.editor
+            errores , tokens = tablex.resaltar_palabras(editor,label_counter_tokens,label_counter_err,1)
+            messagebox.showinfo("Mensaje Sistema", f"Se compiló el código con: {errores} errores y con: {tokens} tokens identificados.")
+            return 0
+    messagebox.showwarning("Mensaje Sistema", "No hay archivo a compilar!!")
 
 
 def main():
